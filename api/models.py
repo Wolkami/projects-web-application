@@ -65,7 +65,7 @@ class Project(models.Model):
         verbose_name = _('Проект')
         verbose_name_plural = _('Проекты')
 
-# Участники проекта
+# Участник проекта
 class ProjectParticipant(models.Model):
     class Role(models.TextChoices):
         STUDENT = 'student', _('Студент')
@@ -83,3 +83,71 @@ class ProjectParticipant(models.Model):
         verbose_name = _('Участник проекта')
         verbose_name_plural = _('Участники проекта')
         unique_together = ('project', 'user')
+
+# Задача
+class Task(models.Model):
+    class Status(models.TextChoices):
+        TODO = 'todo', _('К выполнению')
+        IN_PROGRESS = 'in_progress', _('В процессе')
+        DONE = 'done', _('Завершена')
+
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name='tasks',
+        verbose_name=_('Проект')
+    )
+    title = models.CharField(max_length=200, verbose_name=_('Название задачи'))
+    description = models.TextField(blank=True, verbose_name=_('Описание задачи'))
+    assignee = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assigned_tasks',
+        verbose_name=_('Исполнитель')
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.TODO,
+        verbose_name=_('Статус')
+    )
+    due_date = models.DateField(null=True, blank=True, verbose_name=_('Срок выполнения'))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Создано'))
+
+    def __str__(self):
+        return f"{self.title} ({self.status})"
+
+    class Meta:
+        verbose_name = _('Задача')
+        verbose_name_plural = _('Задачи')
+
+# Комментарий
+class Comment(models.Model):
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='comments', verbose_name=_('Задача'))
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_('Автор'))
+    content = models.TextField(verbose_name=_('Комментарий'))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Дата публикации'))
+
+    def __str__(self):
+        return f"{self.user}: {self.content[:40]}..."
+
+    class Meta:
+        verbose_name = _('Комментарий')
+        verbose_name_plural = _('Комментарии')
+
+# Прикрепленный файл
+class FileAttachment(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='files', verbose_name=_('Проект'), null=True, blank=True)
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='files', verbose_name=_('Задача'), null=True, blank=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_('Автор'))
+    file = models.FileField(upload_to='uploads/', verbose_name=_('Файл'))
+    uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Дата загрузки'))
+
+    def __str__(self):
+        return self.file.name
+
+    class Meta:
+        verbose_name = _('Файл')
+        verbose_name_plural = _('Файлы')
