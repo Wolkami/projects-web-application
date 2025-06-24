@@ -40,6 +40,7 @@ class Project(models.Model):
         ACTIVE = 'active', _('Активный')
         COMPLETED = 'completed', _('Завершённый')
 
+    objects = models.Manager()
     title = models.CharField(max_length=200, verbose_name=_('Название проекта'))
     description = models.TextField(verbose_name=_('Описание проекта'))
     creator = models.ForeignKey(
@@ -72,6 +73,7 @@ class ProjectParticipant(models.Model):
         TEACHER = 'teacher', _('Преподаватель')
         LEAD = 'lead', _('Руководитель')
 
+    objects = models.Manager()
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='participants', verbose_name=_('Проект'))
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_('Пользователь'))
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.STUDENT, verbose_name=_('Роль в проекте'))
@@ -91,6 +93,7 @@ class Task(models.Model):
         IN_PROGRESS = 'in_progress', _('В процессе')
         DONE = 'done', _('Завершена')
 
+    objects = models.Manager()
     project = models.ForeignKey(
         Project,
         on_delete=models.CASCADE,
@@ -125,6 +128,7 @@ class Task(models.Model):
 
 # Комментарий
 class Comment(models.Model):
+    objects = models.Manager()
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='comments', verbose_name=_('Задача'))
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_('Автор'))
     content = models.TextField(verbose_name=_('Комментарий'))
@@ -139,6 +143,7 @@ class Comment(models.Model):
 
 # Прикрепленный файл
 class FileAttachment(models.Model):
+    objects = models.Manager()
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='files', verbose_name=_('Проект'), null=True, blank=True)
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='files', verbose_name=_('Задача'), null=True, blank=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_('Автор'))
