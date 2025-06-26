@@ -22,7 +22,14 @@ class ProjectListCreateView(generics.ListCreateAPIView):
         return (created | participating).distinct()
 
     def perform_create(self, serializer):
-        serializer.save(creator=self.request.user)
+        project = serializer.save(creator=self.request.user)
+
+        # Добавляем автора как участника с ролью lead
+        ProjectParticipant.objects.create(
+            project=project,
+            user=self.request.user,
+            role='lead'
+        )
 
 class ProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Project.objects.all()
@@ -88,6 +95,13 @@ class ProjectParticipantListCreateView(generics.ListCreateAPIView):
             raise PermissionDenied("Нет доступа к проекту.")
 
         return ProjectParticipant.objects.filter(project=project)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        project_id = self.kwargs['project_id']
+        project = Project.objects.get(pk=project_id)
+        context.update({'project': project})
+        return context
 
     def perform_create(self, serializer):
         project_id = self.kwargs['project_id']

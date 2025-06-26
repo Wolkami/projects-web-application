@@ -27,6 +27,17 @@ class ProjectParticipantSerializer(serializers.ModelSerializer):
             'project': {'required': False},
         }
 
+    def validate(self, data):
+        project = self.context.get('project') or data.get('project')
+        user = data.get('user')
+
+        if project and user:
+            exists = ProjectParticipant.objects.filter(project=project, user=user).exists()
+            if exists:
+                raise serializers.ValidationError("Этот пользователь уже добавлен в проект.")
+
+        return data
+
     def to_representation(self, instance):
         rep = super().to_representation(instance)
         user = instance.user
