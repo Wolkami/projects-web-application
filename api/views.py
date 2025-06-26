@@ -2,10 +2,11 @@ from django.shortcuts import render
 
 # Create your views here.
 from rest_framework import generics, permissions
-from .models import Project, Task, Comment, FileAttachment
+from rest_framework.exceptions import PermissionDenied
+from .models import Project, ProjectParticipant, Task, Comment, FileAttachment
 from .permissions import IsProjectParticipantOrCreator, IsTaskProjectParticipant
 from .serializers import (
-    ProjectSerializer, TaskSerializer,
+    ProjectSerializer, ProjectParticipantSerializer, TaskSerializer,
     CommentSerializer, FileAttachmentSerializer
 )
 
@@ -71,3 +72,45 @@ class FileUploadView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+# ProjectParticipant
+class ProjectParticipantListCreateView(generics.ListCreateAPIView):
+    serializer_class = ProjectParticipantSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        project_id = self.kwargs['project_id']
+        project = Project.objects.get(pk=project_id)
+
+        # Проверка прав доступа
+        user = self.request.user
+        if not (user == project.creator or ProjectParticipant.objects.filter(project=project, user=user).exists()):
+            raise PermissionDenied("Нет доступа к проекту.")
+
+        return ProjectParticipant.objects.filter(project=project)
+
+    def perform_create(self, serializer):
+        project_id = self.kwargs['project_id']
+        project = Project.objects.get(pk=project_id)
+
+        user = self.request.user
+        if project.creator != user:
+            raise PermissionDenied("Только автор проекта может добавлять участников.")
+
+        serializer.save(project=project)
+
+class ProjectParticipantUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = ProjectParticipant.objects.all()
+    serializer_class = ProjectParticipantSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_update(self, serializer):
+        project = serializer.instance.project
+        if self.request.user != project.creator:
+            raise PermissionDenied("Только автор проекта может менять роли.")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        if self.request.user != instance.project.creator:
+            raise PermissionDenied("Только автор проекта может удалять участников.")
+        instance.delete()

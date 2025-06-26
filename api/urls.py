@@ -1,5 +1,9 @@
 from django.urls import path
 from . import views
+from .views import (
+    ProjectParticipantListCreateView,
+    ProjectParticipantUpdateDeleteView,
+)
 
 urlpatterns = [
     path('projects/', views.ProjectListCreateView.as_view(), name='project-list'),
@@ -13,9 +17,12 @@ urlpatterns = [
     path('files/', views.FileUploadView.as_view(), name='file-upload'),
 ]
 
-# Token
+# API
 from rest_framework.authtoken.views import obtain_auth_token
 
 urlpatterns += [
     path('auth/token/', obtain_auth_token, name='api-token-auth'),
+
+    path('projects/<int:project_id>/participants/', ProjectParticipantListCreateView.as_view(), name='project-participants'),
+    path('participants/<int:pk>/', ProjectParticipantUpdateDeleteView.as_view(), name='participant-detail'),
 ]

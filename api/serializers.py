@@ -18,11 +18,26 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 # Участник проекта
 class ProjectParticipantSerializer(serializers.ModelSerializer):
-    user = CustomUserSerializer(read_only=True)
+    user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
 
     class Meta:
         model = ProjectParticipant
         fields = ['id', 'project', 'user', 'role']
+        extra_kwargs = {
+            'project': {'required': False},
+        }
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        user = instance.user
+        rep['user'] = {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'role': user.role,
+            'group': user.group,
+        }
+        return rep
 
 # Задача
 class TaskSerializer(serializers.ModelSerializer):
