@@ -12,3 +12,10 @@ urlpatterns = [
 
     path('files/', views.FileUploadView.as_view(), name='file-upload'),
 ]
+
+# Token
+from rest_framework.authtoken.views import obtain_auth_token
+
+urlpatterns += [
+    path('auth/token/', obtain_auth_token, name='api-token-auth'),
+]

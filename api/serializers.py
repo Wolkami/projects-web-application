@@ -1,14 +1,14 @@
 from rest_framework import serializers
+from django.core.exceptions import ValidationError
+from .models import CustomUser, Project, ProjectParticipant, Task, Comment, FileAttachment
 
 # Пользователь
-from .models import CustomUser
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['id', 'username', 'email', 'role', 'group']
 
 # Проект
-from .models import Project
 class ProjectSerializer(serializers.ModelSerializer):
     creator = CustomUserSerializer(read_only=True)
 
@@ -17,7 +17,6 @@ class ProjectSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'description', 'creator', 'start_date', 'end_date', 'status', 'created_at']
 
 # Участник проекта
-from .models import ProjectParticipant
 class ProjectParticipantSerializer(serializers.ModelSerializer):
     user = CustomUserSerializer(read_only=True)
 
@@ -26,17 +25,34 @@ class ProjectParticipantSerializer(serializers.ModelSerializer):
         fields = ['id', 'project', 'user', 'role']
 
 # Задача
-from .models import Task
 class TaskSerializer(serializers.ModelSerializer):
-    assignee = CustomUserSerializer(read_only=True)
-    project = serializers.PrimaryKeyRelatedField(read_only=True)
+    assignee = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), allow_null=True)
+    project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all())
 
     class Meta:
         model = Task
         fields = ['id', 'title', 'description', 'project', 'assignee', 'status', 'due_date', 'created_at']
 
+    def validate(self, data):
+        request = self.context['request']
+        user = request.user
+        project = data.get('project')
+
+        # 1. Проверяем, имеет ли право пользователь создавать задачи в этом проекте
+        is_creator = (project.creator == user)
+        is_participant = ProjectParticipant.objects.filter(project=project, user=user).exists()
+
+        if not (is_creator or is_participant):
+            raise serializers.ValidationError("Вы не являетесь участником проекта.")
+
+        # 2. Проверяем, что assignee — участник того же проекта
+        assignee = data.get('assignee')
+        if assignee and not ProjectParticipant.objects.filter(project=project, user=assignee).exists():
+            raise serializers.ValidationError("Назначенный пользователь не состоит в проекте.")
+
+        return data
+
 # Комментарий
-from .models import Comment
 class CommentSerializer(serializers.ModelSerializer):
     user = CustomUserSerializer(read_only=True)
 
@@ -45,7 +61,6 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = ['id', 'task', 'user', 'content', 'created_at']
 
 # Прикрепленный файл
-from .models import FileAttachment
 class FileAttachmentSerializer(serializers.ModelSerializer):
     user = CustomUserSerializer(read_only=True)
 
