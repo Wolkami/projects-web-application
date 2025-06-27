@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
+from django.contrib.auth.password_validation import validate_password
+
 from .models import CustomUser, Project, ProjectParticipant, Task, Comment, FileAttachment
 
 # Пользователь
@@ -93,3 +95,27 @@ class FileAttachmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = FileAttachment
         fields = ['id', 'file', 'user', 'uploaded_at', 'project', 'task']
+
+# Регистрация пользователя
+class RegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, validators=[validate_password])
+    password2 = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'username', 'email', 'password', 'password2', 'role', 'group']
+
+    def validate(self, data):
+        if data['password'] != data['password2']:
+            raise serializers.ValidationError({"password": "Пароли не совпадают."})
+        return data
+
+    def create(self, validated_data):
+        validated_data.pop('password2')
+        user = CustomUser.objects.create_user(**validated_data)
+        return user
+
+# Смена пароля
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True, validators=[validate_password])

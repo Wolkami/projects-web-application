@@ -1,8 +1,8 @@
 from django.urls import path
 from . import views
 from .views import (
-    ProjectParticipantListCreateView,
-    ProjectParticipantUpdateDeleteView,
+    ProjectParticipantListCreateView, ProjectParticipantUpdateDeleteView, LeaveProjectView,
+    RegisterView, ChangePasswordView,
 )
 
 urlpatterns = [
@@ -22,7 +22,9 @@ from rest_framework.authtoken.views import obtain_auth_token
 
 urlpatterns += [
     path('auth/token/', obtain_auth_token, name='api-token-auth'),
-
+    path('auth/register/', RegisterView.as_view(), name='register'),
+    path('auth/change-password/', ChangePasswordView.as_view(), name='change-password'),
     path('projects/<int:project_id>/participants/', ProjectParticipantListCreateView.as_view(), name='project-participants'),
     path('participants/<int:pk>/', ProjectParticipantUpdateDeleteView.as_view(), name='participant-detail'),
+    path('projects/<int:project_id>/leave/', LeaveProjectView.as_view(), name='leave-project'),
 ]

@@ -1,13 +1,17 @@
 from django.shortcuts import render
 
 # Create your views here.
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied
-from .models import Project, ProjectParticipant, Task, Comment, FileAttachment
+from .models import Project, ProjectParticipant, Task, Comment, FileAttachment, CustomUser
 from .permissions import IsProjectParticipantOrCreator, IsTaskProjectParticipant
 from .serializers import (
     ProjectSerializer, ProjectParticipantSerializer, TaskSerializer,
-    CommentSerializer, FileAttachmentSerializer
+    CommentSerializer, FileAttachmentSerializer,
+    RegisterSerializer, ChangePasswordSerializer,
 )
 
 # Project
@@ -128,3 +132,52 @@ class ProjectParticipantUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
         if self.request.user != instance.project.creator:
             raise PermissionDenied("Только автор проекта может удалять участников.")
         instance.delete()
+
+class LeaveProjectView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, project_id):
+        user = request.user
+        try:
+            project = Project.objects.get(pk=project_id)
+        except Project.DoesNotExist:
+            return Response({"detail": "Проект не найден."}, status=status.HTTP_404_NOT_FOUND)
+
+        if project.creator == user:
+            return Response({"detail": "Создатель проекта не может выйти из проекта."}, status=status.HTTP_400_BAD_REQUEST)
+
+        participant = ProjectParticipant.objects.filter(project=project, user=user).first()
+
+        if participant:
+            participant.delete()
+            return Response({"detail": "Вы успешно вышли из проекта."}, status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response({"detail": "Вы не являетесь участником проекта."}, status=status.HTTP_400_BAD_REQUEST)
+
+# Регистрация и смена пароля
+class RegisterView(generics.CreateAPIView):
+    queryset = CustomUser.objects.all()
+    serializer_class = RegisterSerializer
+    permission_classes = [permissions.AllowAny]
+
+class ChangePasswordView(generics.UpdateAPIView):
+    serializer_class = ChangePasswordSerializer
+    model = CustomUser
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+
+    def update(self, request, *args, **kwargs):
+        user = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            if not user.check_password(serializer.data.get('old_password')):
+                return Response({"old_password": "Неверный текущий пароль."}, status=status.HTTP_400_BAD_REQUEST)
+
+            user.set_password(serializer.data.get('new_password'))
+            user.save()
+            return Response({"detail": "Пароль успешно изменён."}, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
