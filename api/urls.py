@@ -1,30 +1,62 @@
 from django.urls import path
-from . import views
+from django.contrib.auth.views import LoginView, LogoutView
+from rest_framework.authtoken.views import obtain_auth_token
+
 from .views import (
-    ProjectParticipantListCreateView, ProjectParticipantUpdateDeleteView, LeaveProjectView,
+    # HTML-интерфейс
+    dashboard_view,
+    create_project_view,
+    project_detail_view,
+    edit_project_view,
+    delete_project_view,
+    UserRegisterView,
+
+    # API
+    ProjectListCreateView, ProjectDetailView,
+    TaskListCreateView, TaskDetailView,
+    CommentCreateView,
+    FileUploadView,
+    ProjectParticipantListCreateView, ProjectParticipantUpdateDeleteView,
+    LeaveProjectView,
     RegisterView, ChangePasswordView,
 )
 
 urlpatterns = [
-    path('projects/', views.ProjectListCreateView.as_view(), name='project-list'),
-    path('projects/<int:pk>/', views.ProjectDetailView.as_view(), name='project-detail'),
+    # Аутентификация HTML
+    path('login/', LoginView.as_view(template_name='registration/login.html'), name='login'),
+    path('logout/', LogoutView.as_view(next_page='login'), name='logout'),
+    path('register/', UserRegisterView.as_view(), name='register'),
 
-    path('tasks/', views.TaskListCreateView.as_view(), name='task-list'),
-    path('tasks/<int:pk>/', views.TaskDetailView.as_view(), name='task-detail'),
+    # Главная страница (после входа)
+    path('', dashboard_view, name='dashboard'),
 
-    path('comments/', views.CommentCreateView.as_view(), name='comment-create'),
+    # API авторизация
+    path('api/auth/token/', obtain_auth_token, name='api-token-auth'),
+    path('api/auth/register/', RegisterView.as_view(), name='api-register'),
+    path('api/auth/change-password/', ChangePasswordView.as_view(), name='api-change-password'),
 
-    path('files/', views.FileUploadView.as_view(), name='file-upload'),
-]
+    # Проекты
+    path('api/projects/', ProjectListCreateView.as_view(), name='project-list'),
+    path('api/projects/<int:pk>/', ProjectDetailView.as_view(), name='project-detail'),
+    path('projects/<int:pk>/view/', project_detail_view, name='project-view'),
+    path('projects/<int:pk>/edit/', edit_project_view, name='edit-project'),
+    path('projects/<int:pk>/delete/', delete_project_view, name='delete-project'),
 
-# API
-from rest_framework.authtoken.views import obtain_auth_token
 
-urlpatterns += [
-    path('auth/token/', obtain_auth_token, name='api-token-auth'),
-    path('auth/register/', RegisterView.as_view(), name='register'),
-    path('auth/change-password/', ChangePasswordView.as_view(), name='change-password'),
-    path('projects/<int:project_id>/participants/', ProjectParticipantListCreateView.as_view(), name='project-participants'),
-    path('participants/<int:pk>/', ProjectParticipantUpdateDeleteView.as_view(), name='participant-detail'),
-    path('projects/<int:project_id>/leave/', LeaveProjectView.as_view(), name='leave-project'),
+    path('projects/create/', create_project_view, name='create-project'),
+
+    # Участники проектов
+    path('api/projects/<int:project_id>/participants/', ProjectParticipantListCreateView.as_view(), name='project-participants'),
+    path('api/participants/<int:pk>/', ProjectParticipantUpdateDeleteView.as_view(), name='participant-detail'),
+    path('api/projects/<int:project_id>/leave/', LeaveProjectView.as_view(), name='leave-project'),
+
+    # Задачи
+    path('api/tasks/', TaskListCreateView.as_view(), name='task-list'),
+    path('api/tasks/<int:pk>/', TaskDetailView.as_view(), name='task-detail'),
+
+    # Комментарии
+    path('api/comments/', CommentCreateView.as_view(), name='comment-create'),
+
+    # Файлы
+    path('api/files/', FileUploadView.as_view(), name='file-upload'),
 ]

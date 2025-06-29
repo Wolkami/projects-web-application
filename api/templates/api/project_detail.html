@@ -1,0 +1,56 @@
+{% extends "api/base.html" %}
+
+{% block title %}{{ project.title }}{% endblock %}
+
+{% block content %}
+<h2>{{ project.title }}</h2>
+<p class="text-muted">{{ project.description }}</p>
+
+<p><strong>Начало:</strong> {{ project.start_date }} |
+   <strong>Окончание:</strong> {{ project.end_date }}</p>
+
+<hr>
+
+<h4>Задачи</h4>
+
+<div class="row">
+    <div class="col-md-4">
+        <h5>📝 To Do</h5>
+        <ul class="list-group">
+            {% for task in tasks_todo %}
+                <li class="list-group-item">{{ task.title }}</li>
+            {% empty %}
+                <li class="list-group-item text-muted">Нет задач</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="col-md-4">
+        <h5>🚧 In Progress</h5>
+        <ul class="list-group">
+            {% for task in tasks_in_progress %}
+                <li class="list-group-item">{{ task.title }}</li>
+            {% empty %}
+                <li class="list-group-item text-muted">Нет задач</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="col-md-4">
+        <h5>✅ Done</h5>
+        <ul class="list-group">
+            {% for task in tasks_done %}
+                <li class="list-group-item">{{ task.title }}</li>
+            {% empty %}
+                <li class="list-group-item text-muted">Нет задач</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<hr>
+
+<a href="{% url 'edit-project' project.pk %}" class="btn btn-sm btn-outline-primary">Редактировать проект</a>
+<a href="#" class="btn btn-sm btn-outline-secondary">Участники</a>
+<a href="{% url 'delete-project' project.pk %}" class="btn btn-sm btn-danger">Удалить проект</a>
+<a href="#" class="btn btn-sm btn-success">Создать задачу</a>
+<a href="{% url 'dashboard' %}" class="btn btn-link">← Назад</a>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "api/base.html" %}
+
+{% block title %}Удалить проект{% endblock %}
+
+{% block content %}
+<h2 class="text-danger">Удаление проекта</h2>
+<p>Вы уверены, что хотите удалить проект <strong>"{{ project.title }}"</strong>? Это действие нельзя отменить.</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Удалить</button>
+    <a href="{% url 'project-view' project.pk %}" class="btn btn-secondary">Отмена</a>
+</form>
+{% endblock %}

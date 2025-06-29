@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
 
 # Create your views here.
 from rest_framework import generics, permissions, status
@@ -13,6 +13,13 @@ from .serializers import (
     CommentSerializer, FileAttachmentSerializer,
     RegisterSerializer, ChangePasswordSerializer,
 )
+from .forms import CustomUserCreationForm, ProjectForm
+
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import LoginView, LogoutView
+from django.views.generic.edit import CreateView
+from django.urls import reverse_lazy
+from django.contrib import messages
 
 # Project
 class ProjectListCreateView(generics.ListCreateAPIView):
@@ -181,3 +188,88 @@ class ChangePasswordView(generics.UpdateAPIView):
             return Response({"detail": "Пароль успешно изменён."}, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserRegisterView(CreateView):
+    model = CustomUser
+    form_class = CustomUserCreationForm
+    template_name = 'api/register.html'
+    success_url = reverse_lazy('login')
+
+@login_required
+def dashboard_view(request):
+    user = request.user
+
+    created_projects = Project.objects.filter(creator=user)
+    joined_projects = Project.objects.filter(participants__user=user).exclude(creator=user)
+
+    context = {
+        'created_projects': created_projects,
+        'joined_projects': joined_projects,
+    }
+
+    return render(request, 'api/dashboard.html', context)
+
+@login_required
+def create_project_view(request):
+    if request.method == 'POST':
+        form = ProjectForm(request.POST)
+        if form.is_valid():
+            project = form.save(commit=False)
+            project.creator = request.user
+            project.save()
+            messages.success(request, 'Проект успешно создан.')
+            return redirect('dashboard')
+    else:
+        form = ProjectForm()
+    return render(request, 'api/create_project.html', {'form': form})
+
+@login_required
+def edit_project_view(request, pk):
+    project = get_object_or_404(Project, pk=pk)
+
+    if project.creator != request.user:
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        form = ProjectForm(request.POST, instance=project)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Проект обновлён.')
+            return redirect('project-view', pk=project.pk)
+    else:
+        form = ProjectForm(instance=project)
+
+    return render(request, 'api/edit_project.html', {'form': form, 'project': project})
+
+@login_required
+def delete_project_view(request, pk):
+    project = get_object_or_404(Project, pk=pk)
+
+    if project.creator != request.user:
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        project.delete()
+        messages.success(request, 'Проект удалён.')
+        return redirect('dashboard')
+
+    return render(request, 'api/delete_project.html', {'project': project})
+
+@login_required
+def project_detail_view(request, pk):
+    project = get_object_or_404(Project, pk=pk)
+
+    # Только участники или создатель могут смотреть
+    if project.creator != request.user and not project.participants.filter(user=request.user).exists():
+        return redirect('dashboard')
+
+    tasks = Task.objects.filter(project=project)
+
+    context = {
+        'project': project,
+        'tasks_todo': tasks.filter(status='TODO'),
+        'tasks_in_progress': tasks.filter(status='IN_PROGRESS'),
+        'tasks_done': tasks.filter(status='DONE'),
+    }
+
+    return render(request, 'api/project_detail.html', context)
