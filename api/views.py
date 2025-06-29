@@ -13,7 +13,7 @@ from .serializers import (
     CommentSerializer, FileAttachmentSerializer,
     RegisterSerializer, ChangePasswordSerializer,
 )
-from .forms import CustomUserCreationForm, ProjectForm
+from .forms import CustomUserCreationForm, ProjectForm, TaskForm
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, LogoutView
@@ -267,9 +267,75 @@ def project_detail_view(request, pk):
 
     context = {
         'project': project,
-        'tasks_todo': tasks.filter(status='TODO'),
-        'tasks_in_progress': tasks.filter(status='IN_PROGRESS'),
-        'tasks_done': tasks.filter(status='DONE'),
+        'tasks_todo': tasks.filter(status=Task.Status.TODO),
+        'tasks_in_progress': tasks.filter(status=Task.Status.IN_PROGRESS),
+        'tasks_done': tasks.filter(status=Task.Status.DONE),
     }
 
     return render(request, 'api/project_detail.html', context)
+
+@login_required
+def project_participants_view(request, project_id):
+    project = get_object_or_404(Project, pk=project_id)
+
+    # Только автор проекта может управлять участниками
+    if project.creator != request.user:
+        return redirect('dashboard')
+
+    participants = project.participants.select_related('user')
+
+    # Добавление участника
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        user = CustomUser.objects.filter(username=username).first()
+
+        if not user:
+            messages.error(request, f'Пользователь "{username}" не найден.')
+        elif user == project.creator:
+            messages.warning(request, 'Создатель уже является участником.')
+        elif project.participants.filter(user=user).exists():
+            messages.warning(request, 'Пользователь уже в проекте.')
+        else:
+            ProjectParticipant.objects.create(project=project, user=user)
+            messages.success(request, f'Пользователь {username} добавлен.')
+
+        return redirect('project-participants', project_id=project.id)
+
+    return render(request, 'api/project_participants.html', {
+        'project': project,
+        'participants': participants,
+    })
+
+@login_required
+def remove_participant_view(request, pk):
+    participant = get_object_or_404(ProjectParticipant, pk=pk)
+
+    # Только автор проекта может удалять
+    if participant.project.creator != request.user:
+        return redirect('dashboard')
+
+    participant.delete()
+    messages.success(request, f'Участник {participant.user.username} удалён.')
+    return redirect('project-participants', project_id=participant.project.pk)
+
+@login_required
+def create_task_view(request, project_id):
+    project = get_object_or_404(Project, pk=project_id)
+
+    # Только участники или автор проекта могут создавать задачи
+    if project.creator != request.user and not project.participants.filter(user=request.user).exists():
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        form = TaskForm(request.POST)
+        if form.is_valid():
+            task = form.save(commit=False)
+            task.project = project
+            task.creator = request.user
+            task.save()
+            messages.success(request, 'Задача создана.')
+            return redirect('project-view', pk=project.pk)
+    else:
+        form = TaskForm()
+
+    return render(request, 'api/create_task.html', {'form': form, 'project': project})

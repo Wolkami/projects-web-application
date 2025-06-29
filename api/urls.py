@@ -5,11 +5,16 @@ from rest_framework.authtoken.views import obtain_auth_token
 from .views import (
     # HTML-интерфейс
     dashboard_view,
+    UserRegisterView,
+
     create_project_view,
     project_detail_view,
     edit_project_view,
     delete_project_view,
-    UserRegisterView,
+    project_participants_view,
+    remove_participant_view,
+
+    create_task_view,
 
     # API
     ProjectListCreateView, ProjectDetailView,
@@ -38,25 +43,28 @@ urlpatterns = [
     # Проекты
     path('api/projects/', ProjectListCreateView.as_view(), name='project-list'),
     path('api/projects/<int:pk>/', ProjectDetailView.as_view(), name='project-detail'),
+
+    path('projects/create/', create_project_view, name='create-project'),
     path('projects/<int:pk>/view/', project_detail_view, name='project-view'),
     path('projects/<int:pk>/edit/', edit_project_view, name='edit-project'),
     path('projects/<int:pk>/delete/', delete_project_view, name='delete-project'),
 
-
-    path('projects/create/', create_project_view, name='create-project'),
+    path('projects/<int:project_id>/tasks/create/', create_task_view, name='create-task'),
+    path('projects/<int:project_id>/participants/', project_participants_view, name='project-participants'),
+    path('participants/<int:pk>/remove/', remove_participant_view, name='remove-participant'),
 
     # Участники проектов
-    path('api/projects/<int:project_id>/participants/', ProjectParticipantListCreateView.as_view(), name='project-participants'),
-    path('api/participants/<int:pk>/', ProjectParticipantUpdateDeleteView.as_view(), name='participant-detail'),
-    path('api/projects/<int:project_id>/leave/', LeaveProjectView.as_view(), name='leave-project'),
+    path('api/projects/<int:project_id>/participants/', ProjectParticipantListCreateView.as_view(), name='api-project-participants'),
+    path('api/participants/<int:pk>/', ProjectParticipantUpdateDeleteView.as_view(), name='api-participant-detail'),
+    path('api/projects/<int:project_id>/leave/', LeaveProjectView.as_view(), name='api-leave-project'),
 
     # Задачи
-    path('api/tasks/', TaskListCreateView.as_view(), name='task-list'),
-    path('api/tasks/<int:pk>/', TaskDetailView.as_view(), name='task-detail'),
+    path('api/tasks/', TaskListCreateView.as_view(), name='api-task-list'),
+    path('api/tasks/<int:pk>/', TaskDetailView.as_view(), name='api-task-detail'),
 
     # Комментарии
-    path('api/comments/', CommentCreateView.as_view(), name='comment-create'),
+    path('api/comments/', CommentCreateView.as_view(), name='api-comment-create'),
 
     # Файлы
-    path('api/files/', FileUploadView.as_view(), name='file-upload'),
+    path('api/files/', FileUploadView.as_view(), name='api-file-upload'),
 ]

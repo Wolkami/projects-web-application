@@ -49,8 +49,8 @@
 <hr>
 
 <a href="{% url 'edit-project' project.pk %}" class="btn btn-sm btn-outline-primary">Редактировать проект</a>
-<a href="#" class="btn btn-sm btn-outline-secondary">Участники</a>
+<a href="{% url 'project-participants' project.pk %}" class="btn btn-sm btn-outline-secondary">Участники</a>
 <a href="{% url 'delete-project' project.pk %}" class="btn btn-sm btn-danger">Удалить проект</a>
-<a href="#" class="btn btn-sm btn-success">Создать задачу</a>
+<a href="{% url 'create-task' project.pk %}" class="btn btn-sm btn-success">Создать задачу</a>
 <a href="{% url 'dashboard' %}" class="btn btn-link">← Назад</a>
 {% endblock %}

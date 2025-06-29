@@ -1,0 +1,37 @@
+{% extends "api/base.html" %}
+
+{% block title %}Участники проекта{% endblock %}
+
+{% block content %}
+<h2>Участники проекта "{{ project.title }}"</h2>
+
+<form method="post" class="row g-3 mb-4">
+    {% csrf_token %}
+    <div class="col-auto">
+        <input type="text" name="username" class="form-control" placeholder="Имя пользователя">
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Добавить участника</button>
+    </div>
+</form>
+
+<ul class="list-group">
+    {% for participant in participants %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ participant.user.username }}
+            {% if participant.user != request.user %}
+                <form method="post" action="{% url 'remove-participant' participant.id %}" style="margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-danger">Удалить</button>
+                </form>
+            {% else %}
+                <span class="text-muted small">(Вы)</span>
+            {% endif %}
+        </li>
+    {% empty %}
+        <li class="list-group-item text-muted">Участники не найдены</li>
+    {% endfor %}
+</ul>
+
+<a href="{% url 'project-view' project.pk %}" class="btn btn-link mt-3">← Назад к проекту</a>
+{% endblock %}

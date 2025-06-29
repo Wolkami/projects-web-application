@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import CustomUser, Project
+from .models import CustomUser, Project, Task
 
 class CustomUserCreationForm(UserCreationForm):
     class Meta:
@@ -28,3 +28,17 @@ class ProjectForm(forms.ModelForm):
 
         self.fields['start_date'].input_formats = ['%Y-%m-%d']
         self.fields['end_date'].input_formats = ['%Y-%m-%d']
+
+class TaskForm(forms.ModelForm):
+    class Meta:
+        model = Task
+        fields = ['title', 'description', 'status', 'due_date', 'assignee']
+        widgets = {
+            'due_date': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(TaskForm, self).__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-control'
+        self.fields['due_date'].input_formats = ['%Y-%m-%d']
