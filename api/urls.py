@@ -15,6 +15,10 @@ from .views import (
     remove_participant_view,
 
     create_task_view,
+    edit_task_view,
+    delete_task_view,
+    task_detail_view,
+    update_task_status_view,
 
     # API
     ProjectListCreateView, ProjectDetailView,
@@ -61,6 +65,11 @@ urlpatterns = [
     # Задачи
     path('api/tasks/', TaskListCreateView.as_view(), name='api-task-list'),
     path('api/tasks/<int:pk>/', TaskDetailView.as_view(), name='api-task-detail'),
+
+    path('tasks/<int:task_id>/edit/', edit_task_view, name='edit-task'),
+    path('tasks/<int:task_id>/delete/', delete_task_view, name='delete-task'),
+    path('tasks/<int:task_id>/', task_detail_view, name='task-detail-view'),
+    path('tasks/<int:task_id>/status/', update_task_status_view, name='update-task-status'),
 
     # Комментарии
     path('api/comments/', CommentCreateView.as_view(), name='api-comment-create'),

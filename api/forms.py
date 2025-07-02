@@ -38,7 +38,16 @@ class TaskForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        project = kwargs.pop('project', None)
         super(TaskForm, self).__init__(*args, **kwargs)
+
         for field in self.fields.values():
             field.widget.attrs['class'] = 'form-control'
+
         self.fields['due_date'].input_formats = ['%Y-%m-%d']
+
+        # Удаляем поле assignee, если не создатель проекта
+        if user and project and user != project.creator:
+            self.fields.pop('assignee')
+

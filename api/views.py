@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 
 # Create your views here.
+from django.views.decorators.http import require_POST
 from rest_framework import generics, permissions, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -321,13 +322,13 @@ def remove_participant_view(request, pk):
 @login_required
 def create_task_view(request, project_id):
     project = get_object_or_404(Project, pk=project_id)
+    form = TaskForm(request.POST or None, user=request.user, project=project)
 
     # Только участники или автор проекта могут создавать задачи
     if project.creator != request.user and not project.participants.filter(user=request.user).exists():
         return redirect('dashboard')
 
     if request.method == 'POST':
-        form = TaskForm(request.POST)
         if form.is_valid():
             task = form.save(commit=False)
             task.project = project
@@ -335,7 +336,68 @@ def create_task_view(request, project_id):
             task.save()
             messages.success(request, 'Задача создана.')
             return redirect('project-view', pk=project.pk)
-    else:
-        form = TaskForm()
 
     return render(request, 'api/create_task.html', {'form': form, 'project': project})
+
+@login_required
+def edit_task_view(request, task_id):
+    task = get_object_or_404(Task, pk=task_id)
+    project = task.project
+    form = TaskForm(request.POST or None, instance=task, user=request.user, project=project)
+
+    # Только автор проекта или исполнитель может редактировать
+    if request.user != project.creator and request.user != task.assignee:
+        return redirect('project-view', pk=project.pk)
+
+    if request.method == 'POST':
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Задача обновлена.')
+            return redirect('project-view', pk=project.pk)
+
+    return render(request, 'api/edit_task.html', {'form': form, 'task': task})
+
+@login_required
+def delete_task_view(request, task_id):
+    task = get_object_or_404(Task, pk=task_id)
+    project = task.project
+
+    # Только создатель проекта или исполнитель может удалить задачу
+    if request.user != project.creator and request.user != task.assignee:
+        return redirect('project-view', pk=project.pk)
+
+    if request.method == 'POST':
+        task.delete()
+        messages.success(request, 'Задача удалена.')
+        return redirect('project-view', pk=project.pk)
+
+    return render(request, 'api/delete_task.html', {'task': task})
+
+@login_required
+def task_detail_view(request, task_id):
+    task = get_object_or_404(Task, pk=task_id)
+    project = task.project
+
+    # Только участники проекта могут просматривать задачу
+    if request.user != project.creator and not project.participants.filter(user=request.user).exists():
+        return redirect('dashboard')
+
+    return render(request, 'api/task_detail.html', {'task': task})
+
+@require_POST
+@login_required
+def update_task_status_view(request, task_id):
+    task = get_object_or_404(Task, pk=task_id)
+    project = task.project
+
+    # Только автор проекта или исполнитель может менять статус
+    if request.user != project.creator and request.user != task.assignee:
+        return redirect('task-detail-view', task_id=task.id)
+
+    new_status = request.POST.get('status')
+    if new_status in dict(Task.Status.choices).keys():
+        task.status = new_status
+        task.save()
+        messages.success(request, 'Статус обновлён.')
+
+    return redirect('task-detail-view', task_id=task.id)
