@@ -36,7 +36,7 @@ class TaskAdmin(admin.ModelAdmin):
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ['task', 'user', 'created_at']
+    list_display = ['id', 'author', 'content', 'created_at']
     search_fields = ['content']
 
 @admin.register(FileAttachment)

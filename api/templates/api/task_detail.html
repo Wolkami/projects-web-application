@@ -39,4 +39,25 @@
     {% endif %}
     <a href="{% url 'project-view' task.project.pk %}" class="btn btn-secondary">← Назад</a>
 </div>
+
+<hr>
+<h4>Комментарии</h4>
+
+<form method="post" class="mb-4">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Добавить</button>
+</form>
+
+<ul class="list-group">
+    {% for comment in comments %}
+        <li class="list-group-item">
+            <div class="fw-bold">{{ comment.author.username }}</div>
+            <div>{{ comment.content|linebreaks }}</div>
+            <div class="text-muted small mt-1">{{ comment.created_at|date:"d.m.Y H:i" }}</div>
+        </li>
+    {% empty %}
+        <li class="list-group-item text-muted">Комментариев пока нет.</li>
+    {% endfor %}
+</ul>
 {% endblock %}

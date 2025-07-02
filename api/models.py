@@ -128,18 +128,19 @@ class Task(models.Model):
 
 # Комментарий
 class Comment(models.Model):
-    objects = models.Manager()
-    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='comments', verbose_name=_('Задача'))
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_('Автор'))
-    content = models.TextField(verbose_name=_('Комментарий'))
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Дата публикации'))
-
-    def __str__(self):
-        return f"{self.user}: {self.content[:40]}..."
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='comments', verbose_name='Задача')
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='Автор')
+    content = models.TextField(verbose_name='Комментарий')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Создано')
 
     class Meta:
-        verbose_name = _('Комментарий')
-        verbose_name_plural = _('Комментарии')
+        ordering = ['-created_at']
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
+
+    def __str__(self):
+        return f"Комментарий от {self.author} к '{self.task.title}'"
+
 
 # Прикрепленный файл
 class FileAttachment(models.Model):

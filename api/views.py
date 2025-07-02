@@ -14,7 +14,7 @@ from .serializers import (
     CommentSerializer, FileAttachmentSerializer,
     RegisterSerializer, ChangePasswordSerializer,
 )
-from .forms import CustomUserCreationForm, ProjectForm, TaskForm
+from .forms import CustomUserCreationForm, ProjectForm, TaskForm, CommentForm
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, LogoutView
@@ -382,7 +382,23 @@ def task_detail_view(request, task_id):
     if request.user != project.creator and not project.participants.filter(user=request.user).exists():
         return redirect('dashboard')
 
-    return render(request, 'api/task_detail.html', {'task': task})
+    form = CommentForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        comment = form.save(commit=False)
+        comment.task = task
+        comment.author = request.user
+        comment.save()
+        messages.success(request, 'Комментарий добавлен.')
+        return redirect('task-detail-view', task_id=task.id)
+
+    comments = task.comments.select_related('author')
+
+    return render(request, 'api/task_detail.html', {
+        'task': task,
+        'form': form,
+        'comments': comments,
+    })
+
 
 @require_POST
 @login_required
