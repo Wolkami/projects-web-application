@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import CustomUser, Project, Task, Comment
+from .models import CustomUser, Project, Task, Comment, FileAttachment
 
 class CustomUserCreationForm(UserCreationForm):
     class Meta:
@@ -64,4 +64,15 @@ class CommentForm(forms.ModelForm):
         }
         labels = {
             'content': '',
+        }
+
+class TaskFileForm(forms.ModelForm):
+    class Meta:
+        model = FileAttachment
+        fields = ['file']
+        widgets = {
+            'file': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+        }
+        labels = {
+            'file': 'Выберите файл',
         }

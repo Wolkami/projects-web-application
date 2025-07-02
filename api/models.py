@@ -144,16 +144,16 @@ class Comment(models.Model):
 
 # Прикрепленный файл
 class FileAttachment(models.Model):
-    objects = models.Manager()
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='files', verbose_name=_('Проект'), null=True, blank=True)
-    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='files', verbose_name=_('Задача'), null=True, blank=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_('Автор'))
-    file = models.FileField(upload_to='uploads/', verbose_name=_('Файл'))
-    uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Дата загрузки'))
-
-    def __str__(self):
-        return self.file.name
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='files', verbose_name='Задача')
+    file = models.FileField(upload_to='uploads/', verbose_name='Файл')
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='Загрузил')
+    uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата загрузки')
 
     class Meta:
-        verbose_name = _('Файл')
-        verbose_name_plural = _('Файлы')
+        ordering = ['-uploaded_at']
+        verbose_name = 'Файл задачи'
+        verbose_name_plural = 'Файлы задачи'
+
+    def __str__(self):
+        return f"{self.file.name} ({self.task.title})"
+

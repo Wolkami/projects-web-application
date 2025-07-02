@@ -41,6 +41,28 @@
 </div>
 
 <hr>
+<h4>Файлы</h4>
+
+<form method="post" enctype="multipart/form-data" class="mb-4">
+    {% csrf_token %}
+    {{ file_form.as_p }}
+    <button type="submit" class="btn btn-primary">Загрузить</button>
+</form>
+
+<ul class="list-group mb-4">
+    {% for f in files %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+                <a href="{{ f.file.url }}" target="_blank">{{ f.file.name|cut:"uploads/" }}</a><br>
+                <small class="text-muted">{{ f.uploaded_by.username }} — {{ f.uploaded_at|date:"d.m.Y H:i" }}</small>
+            </div>
+        </li>
+    {% empty %}
+        <li class="list-group-item text-muted">Файлов пока нет.</li>
+    {% endfor %}
+</ul>
+
+<hr>
 <h4>Комментарии</h4>
 
 <form method="post" class="mb-4">

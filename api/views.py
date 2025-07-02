@@ -14,7 +14,7 @@ from .serializers import (
     CommentSerializer, FileAttachmentSerializer,
     RegisterSerializer, ChangePasswordSerializer,
 )
-from .forms import CustomUserCreationForm, ProjectForm, TaskForm, CommentForm
+from .forms import CustomUserCreationForm, ProjectForm, TaskForm, CommentForm, TaskFileForm
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, LogoutView
@@ -378,27 +378,43 @@ def task_detail_view(request, task_id):
     task = get_object_or_404(Task, pk=task_id)
     project = task.project
 
-    # Только участники проекта могут просматривать задачу
     if request.user != project.creator and not project.participants.filter(user=request.user).exists():
         return redirect('dashboard')
 
-    form = CommentForm(request.POST or None)
-    if request.method == 'POST' and form.is_valid():
-        comment = form.save(commit=False)
-        comment.task = task
-        comment.author = request.user
-        comment.save()
-        messages.success(request, 'Комментарий добавлен.')
-        return redirect('task-detail-view', task_id=task.id)
+    comment_form = CommentForm()
+    file_form = TaskFileForm()
+
+    if request.method == 'POST':
+        if 'content' in request.POST:
+            comment_form = CommentForm(request.POST)
+            if comment_form.is_valid():
+                comment = comment_form.save(commit=False)
+                comment.task = task
+                comment.author = request.user
+                comment.save()
+                messages.success(request, 'Комментарий добавлен.')
+                return redirect('task-detail-view', task_id=task.id)
+
+        elif 'file' in request.FILES:
+            file_form = TaskFileForm(request.POST, request.FILES)
+            if file_form.is_valid():
+                uploaded_file = file_form.save(commit=False)
+                uploaded_file.task = task
+                uploaded_file.uploaded_by = request.user
+                uploaded_file.save()
+                messages.success(request, 'Файл успешно загружен.')
+                return redirect('task-detail-view', task_id=task.id)
 
     comments = task.comments.select_related('author')
+    files = task.files.select_related('uploaded_by')
 
     return render(request, 'api/task_detail.html', {
         'task': task,
-        'form': form,
         'comments': comments,
+        'form': comment_form,
+        'file_form': file_form,
+        'files': files,
     })
-
 
 @require_POST
 @login_required

@@ -41,4 +41,4 @@ class CommentAdmin(admin.ModelAdmin):
 
 @admin.register(FileAttachment)
 class FileAttachmentAdmin(admin.ModelAdmin):
-    list_display = ['file', 'user', 'uploaded_at', 'project', 'task']
+    list_display = ['id', 'uploaded_by', 'task', 'uploaded_at']
