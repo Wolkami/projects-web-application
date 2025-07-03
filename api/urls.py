@@ -32,11 +32,17 @@ from .views import (
     RegisterView, ChangePasswordView,
 )
 
+from api.forms import BootstrapAuthenticationForm
+
 urlpatterns = [
     # Аутентификация HTML
-    path('login/', LoginView.as_view(template_name='registration/login.html'), name='login'),
+    path(
+        'login/',
+        LoginView.as_view(template_name='registration/login.html', authentication_form=BootstrapAuthenticationForm),
+        name='login'
+    ),
     path('logout/', LogoutView.as_view(next_page='login'), name='logout'),
-    path('register/', UserRegisterView.as_view(), name='register'),
+    path('register/', UserRegisterView.as_view(template_name='registration/register.html'), name='register'),
 
     # Главная страница (после входа)
     path('', dashboard_view, name='dashboard'),
