@@ -1,0 +1,52 @@
+{% extends 'api/base.html' %}
+{% block title %}Задачи проекта{% endblock %}
+
+{% block content %}
+<h2>Задачи проекта: {{ project.title }}</h2>
+
+<div class="mb-3">
+    <a href="{% url 'project-view' project.id %}" class="btn btn-secondary">← Назад к проекту</a>
+</div>
+
+<form method="get" class="mb-3">
+    <label for="status">Фильтр по статусу:</label>
+    <select name="status" id="status" onchange="this.form.submit()" class="form-select w-auto d-inline-block ms-2">
+        <option value="">Все</option>
+        {% for value, label in Task.Status.choices %}
+            <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+</form>
+
+<table class="table table-bordered table-striped">
+    <thead>
+    <tr>
+        <th>Название</th>
+        <th>Исполнитель</th>
+        <th>Статус</th>
+        <th>Срок</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for task in tasks %}
+        <tr>
+            <td>{{ task.title }}</td>
+            <td>{{ task.assignee|default:"—" }}</td>
+            <td>{{ task.get_status_display }}</td>
+            <td>{{ task.due_date|default:"—" }}</td>
+            <td>
+                <a href="{% url 'task-detail-view' task.id %}" class="btn btn-sm btn-outline-primary">👁</a>
+                {% if request.user == project.creator or request.user == task.assignee %}
+                    <a href="{% url 'edit-task' task.id %}" class="btn btn-sm btn-outline-secondary">✏</a>
+                {% endif %}
+            </td>
+        </tr>
+    {% empty %}
+        <tr>
+            <td colspan="5" class="text-muted text-center">Нет задач</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -11,6 +11,8 @@ from .views import (
     project_detail_view,
     edit_project_view,
     delete_project_view,
+    project_tasks_view,
+
     project_participants_view,
     remove_participant_view,
 
@@ -52,6 +54,7 @@ urlpatterns = [
     path('projects/<int:pk>/view/', project_detail_view, name='project-view'),
     path('projects/<int:pk>/edit/', edit_project_view, name='edit-project'),
     path('projects/<int:pk>/delete/', delete_project_view, name='delete-project'),
+    path('projects/<int:project_id>/tasks/all/', project_tasks_view, name='project-tasks'),
 
     path('projects/<int:project_id>/tasks/create/', create_task_view, name='create-task'),
     path('projects/<int:project_id>/participants/', project_participants_view, name='project-participants'),

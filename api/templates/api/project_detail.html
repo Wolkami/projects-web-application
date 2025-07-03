@@ -4,6 +4,7 @@
 
 {% block content %}
 <h2>{{ project.title }}</h2>
+<a href="{% url 'project-tasks' project.id %}" class="btn btn-outline-dark mb-3">📋 Все задачи</a>
 <p class="text-muted">{{ project.description }}</p>
 
 <p><strong>Начало:</strong> {{ project.start_date }} |

@@ -433,3 +433,25 @@ def update_task_status_view(request, task_id):
         messages.success(request, 'Статус обновлён.')
 
     return redirect('task-detail-view', task_id=task.id)
+
+@login_required
+def project_tasks_view(request, project_id):
+    project = get_object_or_404(Project, pk=project_id)
+
+    # Только участники или создатель проекта
+    if request.user != project.creator and not project.participants.filter(user=request.user).exists():
+        return redirect('dashboard')
+
+    tasks = project.tasks.select_related('assignee').all()
+
+    # Фильтрация по статусу (через ?status=done и т.п.)
+    status_filter = request.GET.get('status')
+    if status_filter in [choice[0] for choice in Task.Status.choices]:
+        tasks = tasks.filter(status=status_filter)
+
+    return render(request, 'api/project_tasks.html', {
+        'project': project,
+        'tasks': tasks,
+        'status_filter': status_filter,
+        'Task': Task,
+    })
