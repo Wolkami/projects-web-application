@@ -9,6 +9,8 @@ __pycache__/
 .idea/
 *.sublime-project
 *.sublime-workspace
+.vscode/
+*.swp
 
 # Базы данных
 *.sqlite3
@@ -22,3 +24,8 @@ __pycache__/
 # Файлы ОС
 .DS_Store
 Thumbs.db
+
+# Django
+/static/
+media/
+*.db
