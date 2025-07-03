@@ -1,12 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 
 # Create your views here.
-from django.views.decorators.http import require_POST
 from rest_framework import generics, permissions, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied
+
 from .models import Project, ProjectParticipant, Task, Comment, FileAttachment, CustomUser
 from .permissions import IsProjectParticipantOrCreator, IsTaskProjectParticipant
 from .serializers import (
@@ -18,9 +18,14 @@ from .forms import CustomUserCreationForm, ProjectForm, TaskForm, CommentForm, T
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, LogoutView
-from django.views.generic.edit import CreateView
-from django.urls import reverse_lazy
 from django.contrib import messages
+
+from django.views.generic.edit import CreateView
+from django.views.decorators.http import require_POST
+
+from django.urls import reverse_lazy
+from django.db.models import Q
+from django.core.paginator import Paginator
 
 # Project
 class ProjectListCreateView(generics.ListCreateAPIView):
@@ -444,14 +449,36 @@ def project_tasks_view(request, project_id):
 
     tasks = project.tasks.select_related('assignee').all()
 
+    # Поиск по названию
+    query = request.GET.get('q')
+    if query:
+        tasks = tasks.filter(title__icontains=query)
+
     # Фильтрация по статусу (через ?status=done и т.п.)
     status_filter = request.GET.get('status')
     if status_filter in [choice[0] for choice in Task.Status.choices]:
         tasks = tasks.filter(status=status_filter)
 
+    # Фильтрация по исполнителю
+    assignee_id = request.GET.get('assignee')
+    if assignee_id and assignee_id.isdigit():
+        tasks = tasks.filter(assignee__id=assignee_id)
+
+    # Участники проекта (для фильтра по исполнителю)
+    participants = project.participants.select_related('user').all()
+
+    # Пагинация
+    paginator = Paginator(tasks, 10)  # 10 задач на страницу
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     return render(request, 'api/project_tasks.html', {
         'project': project,
         'tasks': tasks,
         'status_filter': status_filter,
+        'assignee_filter': assignee_id,
+        'query': query,
+        'participants': participants,
         'Task': Task,
+        'page_obj': page_obj,
     })
