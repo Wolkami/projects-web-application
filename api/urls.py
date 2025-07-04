@@ -49,43 +49,34 @@ urlpatterns = [
     # Главная страница (после входа)
     path('', dashboard_view, name='dashboard'),
 
-    # API авторизация
+    #API
     path('api/auth/token/', obtain_auth_token, name='api-token-auth'),
     path('api/auth/register/', RegisterView.as_view(), name='api-register'),
     path('api/auth/change-password/', ChangePasswordView.as_view(), name='api-change-password'),
-
-    # Проекты
     path('api/projects/', ProjectListCreateView.as_view(), name='project-list'),
     path('api/projects/<int:pk>/', ProjectDetailView.as_view(), name='project-detail'),
+    path('api/projects/<int:project_id>/participants/', ProjectParticipantListCreateView.as_view(), name='api-project-participants'),
+    path('api/projects/<int:project_id>/leave/', ApiLeaveProjectView.as_view(), name='api-leave-project'),
+    path('api/participants/<int:pk>/', ProjectParticipantUpdateDeleteView.as_view(), name='api-participant-detail'),
+    path('api/tasks/', TaskListCreateView.as_view(), name='api-task-list'),
+    path('api/tasks/<int:pk>/', TaskDetailView.as_view(), name='api-task-detail'),
+    path('api/comments/', CommentCreateView.as_view(), name='api-comment-create'),
+    path('api/files/', FileUploadView.as_view(), name='api-file-upload'),
 
+    # Проекты
     path('projects/create/', create_project_view, name='create-project'),
     path('projects/<int:pk>/view/', project_detail_view, name='project-view'),
     path('projects/<int:pk>/edit/', edit_project_view, name='edit-project'),
     path('projects/<int:pk>/delete/', delete_project_view, name='delete-project'),
     path('projects/<int:project_id>/tasks/all/', project_tasks_view, name='project-tasks'),
-
     path('projects/<int:project_id>/tasks/create/', create_task_view, name='create-task'),
     path('projects/<int:project_id>/participants/', project_participants_view, name='project-participants'),
-    path('participants/<int:pk>/remove/', remove_participant_view, name='remove-participant'),
     path('projects/<int:project_id>/leave/', LeaveProjectView.as_view(), name='leave-project'),
-
-    # Участники проектов
-    path('api/projects/<int:project_id>/participants/', ProjectParticipantListCreateView.as_view(), name='api-project-participants'),
-    path('api/participants/<int:pk>/', ProjectParticipantUpdateDeleteView.as_view(), name='api-participant-detail'),
-    path('api/projects/<int:project_id>/leave/', ApiLeaveProjectView.as_view(), name='api-leave-project'),
+    path('participants/<int:pk>/remove/', remove_participant_view, name='remove-participant'),
 
     # Задачи
-    path('api/tasks/', TaskListCreateView.as_view(), name='api-task-list'),
-    path('api/tasks/<int:pk>/', TaskDetailView.as_view(), name='api-task-detail'),
-
     path('tasks/<int:task_id>/edit/', edit_task_view, name='edit-task'),
     path('tasks/<int:task_id>/delete/', delete_task_view, name='delete-task'),
     path('tasks/<int:task_id>/', task_detail_view, name='task-detail-view'),
     path('tasks/<int:task_id>/status/', update_task_status_view, name='update-task-status'),
-
-    # Комментарии
-    path('api/comments/', CommentCreateView.as_view(), name='api-comment-create'),
-
-    # Файлы
-    path('api/files/', FileUploadView.as_view(), name='api-file-upload'),
 ]
