@@ -1,37 +1,48 @@
 {% extends "api/base.html" %}
 
-{% block title %}Участники проекта{% endblock %}
-
 {% block content %}
-<h2>Участники проекта "{{ project.title }}"</h2>
 
-<form method="post" class="row g-3 mb-4">
-    {% csrf_token %}
-    <div class="col-auto">
-        <input type="text" name="username" class="form-control" placeholder="Имя пользователя">
-    </div>
-    <div class="col-auto">
-        <button type="submit" class="btn btn-primary">Добавить участника</button>
-    </div>
-</form>
+<div class="container mt-4">
+  <h2>Участники проекта: {{ project.title }}</h2>
 
-<ul class="list-group">
+  <ul class="list-group mb-4">
     {% for participant in participants %}
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-            {{ participant.user.username }}
-            {% if participant.user != request.user %}
-                <form method="post" action="{% url 'remove-participant' participant.id %}" style="margin: 0;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-danger">Удалить</button>
-                </form>
-            {% else %}
-                <span class="text-muted small">(Вы)</span>
-            {% endif %}
-        </li>
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        {{ participant.user.username }} ({{ participant.get_role_display }})
+        {% if request.user == project.creator and participant.user != request.user %}
+          <form method="post" action="{% url 'remove-participant' participant.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-danger">Удалить</button>
+          </form>
+        {% endif %}
+      </li>
     {% empty %}
-        <li class="list-group-item text-muted">Участники не найдены</li>
+      <li class="list-group-item">Нет участников</li>
     {% endfor %}
-</ul>
+  </ul>
 
-<a href="{% url 'project-view' project.pk %}" class="btn btn-link mt-3">← Назад к проекту</a>
+  <h4>Добавить участника</h4>
+  <form method="post">
+    {% csrf_token %}
+    <div class="row mb-3">
+      <div class="col">
+        {{ form.user.label_tag }}
+        {{ form.user }}
+        {% if form.user.errors %}
+          <div class="text-danger small">{{ form.user.errors }}</div>
+        {% endif %}
+      </div>
+      <div class="col">
+        {{ form.role.label_tag }}
+        {{ form.role }}
+        {% if form.role.errors %}
+          <div class="text-danger small">{{ form.role.errors }}</div>
+        {% endif %}
+      </div>
+    </div>
+    <button type="submit" class="btn btn-success">Добавить</button>
+  </form>
+
+  <a href="{% url 'project-view' project.pk %}" class="btn btn-link mt-3">← Назад к проекту</a>
+</div>
 {% endblock %}

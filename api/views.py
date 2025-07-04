@@ -14,7 +14,7 @@ from .serializers import (
     CommentSerializer, FileAttachmentSerializer,
     RegisterSerializer, ChangePasswordSerializer,
 )
-from .forms import CustomUserCreationForm, ProjectForm, TaskForm, CommentForm, TaskFileForm
+from .forms import CustomUserCreationForm, ProjectForm, TaskForm, CommentForm, TaskFileForm, AddParticipantForm
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, LogoutView
@@ -284,32 +284,25 @@ def project_detail_view(request, pk):
 def project_participants_view(request, project_id):
     project = get_object_or_404(Project, pk=project_id)
 
-    # Только автор проекта может управлять участниками
-    if project.creator != request.user:
+    if request.user != project.creator:
         return redirect('dashboard')
 
     participants = project.participants.select_related('user')
 
-    # Добавление участника
     if request.method == 'POST':
-        username = request.POST.get('username')
-        user = CustomUser.objects.filter(username=username).first()
-
-        if not user:
-            messages.error(request, f'Пользователь "{username}" не найден.')
-        elif user == project.creator:
-            messages.warning(request, 'Создатель уже является участником.')
-        elif project.participants.filter(user=user).exists():
-            messages.warning(request, 'Пользователь уже в проекте.')
-        else:
-            ProjectParticipant.objects.create(project=project, user=user)
-            messages.success(request, f'Пользователь {username} добавлен.')
-
-        return redirect('project-participants', project_id=project.id)
+        form = AddParticipantForm(request.POST, project=project)
+        if form.is_valid():
+            participant = form.save(commit=False)
+            participant.project = project
+            participant.save()
+            return redirect('project-participants', project_id=project.pk)
+    else:
+        form = AddParticipantForm(project=project)
 
     return render(request, 'api/project_participants.html', {
         'project': project,
         'participants': participants,
+        'form': form
     })
 
 @login_required

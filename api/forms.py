@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from .models import CustomUser, Project, Task, Comment, FileAttachment
+from .models import CustomUser, Project, Task, Comment, FileAttachment, ProjectParticipant
 
 class BootstrapAuthenticationForm(AuthenticationForm):
     def __init__(self, *args, **kwargs):
@@ -83,3 +83,21 @@ class TaskFileForm(forms.ModelForm):
         labels = {
             'file': 'Выберите файл',
         }
+
+class AddParticipantForm(forms.ModelForm):
+    class Meta:
+        model = ProjectParticipant
+        fields = ['user', 'role']
+
+    def __init__(self, *args, **kwargs):
+        project = kwargs.pop('project', None)  # получаем проект из представления
+        super().__init__(*args, **kwargs)
+
+        if project:
+            # Исключаем уже добавленных участников
+            existing_ids = project.participants.values_list('user_id', flat=True)
+            self.fields['user'].queryset = CustomUser.objects.exclude(id__in=existing_ids)
+
+        # Красота для Bootstrap
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-control'
