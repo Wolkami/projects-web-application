@@ -2,7 +2,7 @@ from django.urls import path
 from django.contrib.auth.views import LoginView, LogoutView
 from rest_framework.authtoken.views import obtain_auth_token
 
-from .views import (
+from api.views import (
     # HTML-интерфейс
     dashboard_view,
     UserRegisterView,
@@ -28,11 +28,13 @@ from .views import (
     CommentCreateView,
     FileUploadView,
     ProjectParticipantListCreateView, ProjectParticipantUpdateDeleteView,
-    LeaveProjectView,
+    LeaveProjectView as ApiLeaveProjectView,
     RegisterView, ChangePasswordView,
 )
 
 from api.forms import BootstrapAuthenticationForm
+
+from student_project_manager.views import LeaveProjectView
 
 urlpatterns = [
     # Аутентификация HTML
@@ -65,11 +67,12 @@ urlpatterns = [
     path('projects/<int:project_id>/tasks/create/', create_task_view, name='create-task'),
     path('projects/<int:project_id>/participants/', project_participants_view, name='project-participants'),
     path('participants/<int:pk>/remove/', remove_participant_view, name='remove-participant'),
+    path('projects/<int:project_id>/leave/', LeaveProjectView.as_view(), name='leave-project'),
 
     # Участники проектов
     path('api/projects/<int:project_id>/participants/', ProjectParticipantListCreateView.as_view(), name='api-project-participants'),
     path('api/participants/<int:pk>/', ProjectParticipantUpdateDeleteView.as_view(), name='api-participant-detail'),
-    path('api/projects/<int:project_id>/leave/', LeaveProjectView.as_view(), name='api-leave-project'),
+    path('api/projects/<int:project_id>/leave/', ApiLeaveProjectView.as_view(), name='api-leave-project'),
 
     # Задачи
     path('api/tasks/', TaskListCreateView.as_view(), name='api-task-list'),

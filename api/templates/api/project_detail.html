@@ -78,6 +78,14 @@
     <a href="{% url 'project-participants' project.pk %}" class="btn btn-sm btn-outline-secondary">Участники</a>
     <a href="{% url 'delete-project' project.pk %}" class="btn btn-sm btn-danger">Удалить проект</a>
 {% endif %}
-<a href="{% url 'create-task' project.pk %}" class="btn btn-sm btn-success">Создать задачу</a>
+<div class="d-flex justify-content-between align-items-center">
+    <a href="{% url 'create-task' project.pk %}" class="btn btn-sm btn-success">Создать задачу</a>
+    {% if is_participant and project.creator != request.user %}
+        <form method="post" action="{% url 'leave-project' project.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger">Выйти из проекта</button>
+        </form>
+    {% endif %}
+</div>
 <a href="{% url 'dashboard' %}" class="btn btn-link">← Назад</a>
 {% endblock %}

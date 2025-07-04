@@ -264,6 +264,7 @@ def delete_project_view(request, pk):
 @login_required
 def project_detail_view(request, pk):
     project = get_object_or_404(Project, pk=pk)
+    is_participant = project.participants.filter(user=request.user).exists()
 
     # Только участники или создатель могут смотреть
     if project.creator != request.user and not project.participants.filter(user=request.user).exists():
@@ -276,6 +277,7 @@ def project_detail_view(request, pk):
         'tasks_todo': tasks.filter(status=Task.Status.TODO),
         'tasks_in_progress': tasks.filter(status=Task.Status.IN_PROGRESS),
         'tasks_done': tasks.filter(status=Task.Status.DONE),
+        'is_participant': is_participant,
     }
 
     return render(request, 'api/project_detail.html', context)
