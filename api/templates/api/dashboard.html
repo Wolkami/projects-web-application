@@ -1,0 +1,33 @@
+{% extends "api/base.html" %}
+
+{% block title %}Мои проекты{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Мои проекты</h2>
+
+<h4>Созданные мною</h4>
+<ul class="list-group mb-4">
+    {% for project in created_projects %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ project.title }}
+            <a href="{% url 'project-view' project.pk %}" class="btn btn-sm btn-outline-primary">Открыть</a>
+        </li>
+    {% empty %}
+        <li class="list-group-item">Нет созданных проектов</li>
+    {% endfor %}
+</ul>
+
+<h4>Я участвую</h4>
+<ul class="list-group mb-4">
+    {% for project in joined_projects %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ project.title }}
+            <a href="{% url 'project-view' project.pk %}" class="btn btn-sm btn-outline-primary">Открыть</a>
+        </li>
+    {% empty %}
+        <li class="list-group-item">Вы не участвуете в проектах</li>
+    {% endfor %}
+</ul>
+
+<a href="{% url 'create-project' %}" class="btn btn-success">Создать новый проект</a>
+{% endblock %}

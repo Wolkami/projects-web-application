@@ -1,0 +1,31 @@
+# Виртуальное окружение
+venv/
+
+# Кеш и байткод
+__pycache__/
+*.py[cod]
+
+# Файлы и каталоги IDE
+.idea/
+*.sublime-project
+*.sublime-workspace
+.vscode/
+*.swp
+
+# Базы данных
+*.sqlite3
+
+# Настройки среды
+.env
+
+# Логи
+*.log
+
+# Файлы ОС
+.DS_Store
+Thumbs.db
+
+# Django
+/static/
+media/
+*.db

@@ -1,0 +1,106 @@
+{% extends 'api/base.html' %}
+{% block title %}Задачи проекта{% endblock %}
+
+{% block content %}
+<h2>Задачи проекта: {{ project.title }}</h2>
+
+<div class="mb-3">
+    <a href="{% url 'project-view' project.id %}" class="btn btn-secondary">← Назад к проекту</a>
+</div>
+
+<form method="get" class="row g-2 mb-4 align-items-end">
+    <div class="col-auto">
+        <label for="q" class="form-label">Поиск по названию</label>
+        <input type="text"
+               name="q"
+               id="q"
+               value="{{ query|default_if_none:'' }}"
+               placeholder="Введите название"
+               class="form-control">
+    </div>
+
+    <div class="col-auto">
+        <label for="status" class="form-label">Статус</label>
+        <select name="status" id="status" class="form-select">
+            <option value="">Все</option>
+            {% for value, label in Task.Status.choices %}
+                <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-auto">
+        <label for="assignee" class="form-label">Исполнитель</label>
+        <select name="assignee" id="assignee" class="form-select">
+            <option value="">Любой</option>
+            {% for participant in participants %}
+                <option value="{{ participant.user.id }}" {% if assignee_filter == participant.user.id|stringformat:"s" %}selected{% endif %}>
+                    {{ participant.user.username }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-auto mt-3">
+        <button type="submit" class="btn btn-primary">Фильтровать</button>
+    </div>
+    <div class="col-auto mt-3">
+        <a href="{% url 'project-tasks' project.id %}" class="btn btn-secondary">Сбросить фильтры</a>
+    </div>
+</form>
+
+<table class="table table-bordered table-striped">
+    <thead>
+    <tr>
+        <th>Название</th>
+        <th>Исполнитель</th>
+        <th>Статус</th>
+        <th>Срок</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for task in page_obj %}
+        <tr>
+            <td>{{ task.title }}</td>
+            <td>{{ task.assignee|default:"—" }}</td>
+            <td>{{ task.get_status_display }}</td>
+            <td>{{ task.due_date|default:"—" }}</td>
+            <td>
+                <a href="{% url 'task-detail-view' task.id %}" class="btn btn-sm btn-outline-primary">👁</a>
+                {% if request.user == project.creator or request.user == task.assignee %}
+                    <a href="{% url 'edit-task' task.id %}" class="btn btn-sm btn-outline-secondary">✏</a>
+                {% endif %}
+            </td>
+        </tr>
+    {% empty %}
+        <tr>
+            <td colspan="5" class="text-muted text-center">Нет задач</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<nav>
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}{% if status_filter %}status={{ status_filter }}&{% endif %}{% if assignee_filter %}assignee={{ assignee_filter }}&{% endif %}page={{ page_obj.previous_page_number }}">← Назад</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">← Назад</span></li>
+        {% endif %}
+
+        <li class="page-item disabled">
+            <span class="page-link">Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+        </li>
+
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}{% if status_filter %}status={{ status_filter }}&{% endif %}{% if assignee_filter %}assignee={{ assignee_filter }}&{% endif %}page={{ page_obj.next_page_number }}">Вперёд →</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">Вперёд →</span></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endblock %}

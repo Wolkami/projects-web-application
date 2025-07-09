@@ -1,0 +1,85 @@
+{% extends "api/base.html" %}
+
+{% block title %}{{ task.title }}{% endblock %}
+
+{% block content %}
+<h2>{{ task.title }}</h2>
+
+<ul class="list-group mb-4">
+    <li class="list-group-item"><strong>Проект:</strong> {{ task.project.title }}</li>
+    <li class="list-group-item"><strong>Описание:</strong><br>{{ task.description|linebreaks }}</li>
+    <li class="list-group-item">
+        {% if request.user == task.assignee or request.user == task.project.creator %}
+            <form method="post" action="{% url 'update-task-status' task.id %}" class="d-inline">
+                {% csrf_token %}
+                <div class="input-group">
+                    <select name="status" class="form-select">
+                        {% for value, label in task.Status.choices %}
+                            <option value="{{ value }}" {% if value == task.status %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-outline-primary">Обновить</button>
+                </div>
+            </form>
+        {% else %}
+            <p><strong>Статус:</strong> {{ task.get_status_display }}</p>
+        {% endif %}
+    </li>
+    <li class="list-group-item"><strong>Срок выполнения:</strong> {{ task.due_date }}</li>
+    <li class="list-group-item"><strong>Исполнитель:</strong> {{ task.assignee|default:"(не назначен)" }}</li>
+    <li class="list-group-item text-muted"><strong>Создана:</strong> {{ task.created_at|date:"d.m.Y H:i" }}</li>
+</ul>
+
+<div class="d-flex gap-2">
+    {% if request.user == task.project.creator or request.user == task.assignee %}
+        <a href="{% url 'edit-task' task.id %}" class="btn btn-outline-secondary">✏️ Редактировать</a>
+        <a href="{% url 'delete-task' task.id %}" class="btn btn-outline-danger">🗑 Удалить</a>
+    {% endif %}
+    <a href="{% url 'project-view' task.project.pk %}" class="btn btn-secondary">← Назад</a>
+</div>
+
+<hr>
+<h4>Файлы</h4>
+
+<ul class="list-group mb-4">
+    {% for f in files %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+                <a href="{{ f.file.url }}" target="_blank">{{ f.file.name|cut:"uploads/" }}</a><br>
+                <small class="text-muted">{{ f.uploaded_by.username }} — {{ f.uploaded_at|date:"d.m.Y H:i" }}</small>
+            </div>
+        </li>
+    {% empty %}
+        <li class="list-group-item text-muted">Файлов пока нет.</li>
+    {% endfor %}
+</ul>
+
+<form method="post" enctype="multipart/form-data" class="mb-4">
+    {% csrf_token %}
+    {{ file_form.as_p }}
+    <button type="submit" class="btn btn-primary">Загрузить</button>
+</form>
+
+<hr>
+<h4>Комментарии</h4>
+
+<form method="post" class="mb-4">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Добавить</button>
+</form>
+
+<ul class="list-group">
+    {% for comment in comments %}
+        <li class="list-group-item">
+            <div class="fw-bold">{{ comment.author.username }}</div>
+            <div>{{ comment.content|linebreaks }}</div>
+            <div class="text-muted small mt-1">{{ comment.created_at|date:"d.m.Y H:i" }}</div>
+        </li>
+    {% empty %}
+        <li class="list-group-item text-muted">Комментариев пока нет.</li>
+    {% endfor %}
+</ul>
+{% endblock %}

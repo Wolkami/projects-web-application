@@ -1,0 +1,91 @@
+{% extends "api/base.html" %}
+
+{% block title %}{{ project.title }}{% endblock %}
+
+{% block content %}
+<h2>{{ project.title }}</h2>
+<a href="{% url 'project-tasks' project.id %}" class="btn btn-outline-dark mb-3">📋 Все задачи</a>
+<p class="text-muted">{{ project.description }}</p>
+
+<p><strong>Начало:</strong> {{ project.start_date }} |
+   <strong>Окончание:</strong> {{ project.end_date }}</p>
+
+<hr>
+
+<h4>Задачи</h4>
+
+<div class="row">
+    <div class="col-md-4">
+        <h5>📝 To Do</h5>
+        <ul class="list-group">
+            {% for task in tasks_todo %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <a href="{% url 'task-detail-view' task.id %}">{{ task.title }}</a>
+                    <div>
+                        {% if request.user == project.creator or request.user == task.assignee %}
+                            <a href="{% url 'edit-task' task.id %}" class="btn btn-sm btn-outline-secondary">✏️</a>
+                            <a href="{% url 'delete-task' task.id %}" class="btn btn-sm btn-outline-danger">🗑</a>
+                        {% endif %}
+                    </div>
+                </li>
+            {% empty %}
+                <li class="list-group-item text-muted">Нет задач</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="col-md-4">
+        <h5>🚧 In Progress</h5>
+        <ul class="list-group">
+            {% for task in tasks_in_progress %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <a href="{% url 'task-detail-view' task.id %}">{{ task.title }}</a>
+                    <div>
+                        {% if request.user == project.creator or request.user == task.assignee %}
+                            <a href="{% url 'edit-task' task.id %}" class="btn btn-sm btn-outline-secondary">✏️</a>
+                            <a href="{% url 'delete-task' task.id %}" class="btn btn-sm btn-outline-danger">🗑</a>
+                        {% endif %}
+                    </div>
+                </li>
+            {% empty %}
+                <li class="list-group-item text-muted">Нет задач</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="col-md-4">
+        <h5>✅ Done</h5>
+        <ul class="list-group">
+            {% for task in tasks_done %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <a href="{% url 'task-detail-view' task.id %}">{{ task.title }}</a>
+                    <div>
+                        {% if request.user == project.creator or request.user == task.assignee %}
+                            <a href="{% url 'edit-task' task.id %}" class="btn btn-sm btn-outline-secondary">✏️</a>
+                            <a href="{% url 'delete-task' task.id %}" class="btn btn-sm btn-outline-danger">🗑</a>
+                        {% endif %}
+                    </div>
+                </li>
+            {% empty %}
+                <li class="list-group-item text-muted">Нет задач</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<hr>
+
+{% if request.user == project.creator %}
+    <a href="{% url 'edit-project' project.pk %}" class="btn btn-sm btn-outline-primary">Редактировать проект</a>
+    <a href="{% url 'project-participants' project.pk %}" class="btn btn-sm btn-outline-secondary">Участники</a>
+    <a href="{% url 'delete-project' project.pk %}" class="btn btn-sm btn-danger">Удалить проект</a>
+{% endif %}
+<div class="d-flex justify-content-between align-items-center">
+    <a href="{% url 'create-task' project.pk %}" class="btn btn-sm btn-success">Создать задачу</a>
+    {% if is_participant and project.creator != request.user %}
+        <form method="post" action="{% url 'leave-project' project.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger">Выйти из проекта</button>
+        </form>
+    {% endif %}
+</div>
+<a href="{% url 'dashboard' %}" class="btn btn-link">← Назад</a>
+{% endblock %}
